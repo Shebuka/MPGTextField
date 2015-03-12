@@ -22,6 +22,12 @@
 //Set this to override the default seperator color for tableView in search results. The default color is light gray.
 @property (nonatomic) UIColor *seperatorColor;
 
+//Set this to override the default display direction
+@property (nonatomic) Boolean aboveFiled;
+
+//Set this to override the default root view in which display the popup
+@property (nonatomic, weak) UIView *inView;
+
 @end
 
 @protocol MPGTextFieldDelegate <NSObject>

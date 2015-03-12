@@ -20,6 +20,8 @@ NSArray *data;
     self = [super initWithFrame:frame];
     if ( self ) {
         // Initialization code
+        [self setInView:nil];
+        [self setAboveFiled:NO];
     }
     return self;
 }
@@ -117,17 +119,20 @@ NSArray *data;
     static NSString *CellIdentifier = @"MPGResultsCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     
+    NSDictionary *dataForRowAtIndexPath = [[self applyFilterWithSearchQuery:self.text] objectAtIndex:indexPath.row];
     if ( cell == nil ) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
+        if ( [dataForRowAtIndexPath objectForKey:@"DisplaySubText"] == nil )
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+        else
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
     
-    NSDictionary *dataForRowAtIndexPath = [[self applyFilterWithSearchQuery:self.text] objectAtIndex:indexPath.row];
     [cell setBackgroundColor:[UIColor clearColor]];
     [[cell textLabel] setText:[dataForRowAtIndexPath objectForKey:@"DisplayText"]];
     if ( [dataForRowAtIndexPath objectForKey:@"DisplaySubText"] != nil ) {
         [[cell detailTextLabel] setText:[dataForRowAtIndexPath objectForKey:@"DisplaySubText"]];
     }
-
+    
     return cell;
 }
 
@@ -139,7 +144,7 @@ NSArray *data;
 #pragma mark Filter Method
 
 - (NSArray *)applyFilterWithSearchQuery:(NSString *)filter {
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"DisplayText BEGINSWITH[cd] %@", filter];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"DisplayText CONTAINS[cd] %@", filter];
     NSArray *filteredGoods = [NSArray arrayWithArray:[data filteredArrayUsingPredicate:predicate]];
     return filteredGoods;
 }
@@ -159,26 +164,40 @@ NSArray *data;
         tableViewController = [[UITableViewController alloc] init];
         [tableViewController.tableView setDelegate:self];
         [tableViewController.tableView setDataSource:self];
-        if ( self.backgroundColor == nil ) {
-            //Background color has not been set by the user. Use default color instead.
-            [tableViewController.tableView setBackgroundColor:[UIColor colorWithRed:240.0 / 255.0 green:240.0 / 255.0 blue:240.0 / 255.0 alpha:1.0]];
-        }
-        else {
-            [tableViewController.tableView setBackgroundColor:self.backgroundColor];
-        }
+        [tableViewController.tableView setAutoresizingMask:UIViewAutoresizingNone];
         
+        if ( self.backgroundColor == nil ) //Background color has not been set by the user. Use default color instead.
+            [tableViewController.tableView setBackgroundColor:[UIColor whiteColor]];
+        else
+            [tableViewController.tableView setBackgroundColor:self.backgroundColor];
         [tableViewController.tableView setSeparatorColor:self.seperatorColor];
+        
         if ( self.popoverSize.size.height == 0.0 ) {
             //PopoverSize frame has not been set. Use default parameters instead.
-            CGRect frameForPresentation = [self frame];
-            frameForPresentation.origin.y += self.frame.size.height;
-            frameForPresentation.size.height = 200;
+            CGRect frameForPresentation;
+            if ( [self inView] == nil )
+                frameForPresentation = [[[[self window] subviews] firstObject] convertRect:[self bounds] fromView:self];  // get absoulute frame
+            else
+                frameForPresentation = [[self inView] convertRect:[self bounds] fromView:self];
+            
+            frameForPresentation.size.height = 112;
+            
+            if ( [self aboveFiled] )
+                frameForPresentation.origin.y -= frameForPresentation.size.height + self.frame.origin.y;  //presented on top of the field
+            else
+                frameForPresentation.origin.y += self.frame.size.height;
+            
             [tableViewController.tableView setFrame:frameForPresentation];
         }
         else {
             [tableViewController.tableView setFrame:self.popoverSize];
         }
-        [[self superview] addSubview:tableViewController.tableView];
+        
+        if ( [self inView] == nil )
+            [[[[self window] subviews] firstObject] addSubview:tableViewController.tableView];
+        else
+            [[self inView] addSubview:tableViewController.tableView];
+        
         tableViewController.tableView.alpha = 0.0;
         [UIView animateWithDuration:0.3
                          animations:^{
