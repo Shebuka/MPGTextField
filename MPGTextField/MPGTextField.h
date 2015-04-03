@@ -25,6 +25,9 @@
 //Set this to override the default display direction
 @property (nonatomic) Boolean aboveFiled;
 
+//Set this to show full list with empty filed
+@property (nonatomic) Boolean showWithEmptyField;
+
 //Set this to override the default root view in which display the popup
 @property (nonatomic, weak) UIView *inView;
 

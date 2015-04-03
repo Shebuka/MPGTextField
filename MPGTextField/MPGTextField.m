@@ -22,6 +22,7 @@ NSArray *data;
         // Initialization code
         [self setInView:nil];
         [self setAboveFiled:NO];
+        [self setShowWithEmptyField:NO];
     }
     return self;
 }
@@ -37,7 +38,7 @@ NSArray *data;
 - (void)layoutSubviews {
     [super layoutSubviews];
     
-    if ( self.text.length > 0 && self.isFirstResponder ) {
+    if ( (self.text.length > 0 || [self showWithEmptyField]) && self.isFirstResponder ) {
         //User entered some text in the textfield. Check if the delegate has implemented the required method of the protocol. Create a popover and show it around the MPGTextField.
 
         if ( [self.delegate respondsToSelector:@selector(dataForPopoverInTextField:)] ) {
@@ -101,7 +102,7 @@ NSArray *data;
 #pragma mark UITableView DataSource & Delegate Methods
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    int count = [[self applyFilterWithSearchQuery:self.text] count];
+    NSInteger count = [[self applyFilterWithSearchQuery:self.text] count];
     if ( count == 0 ) {
         [UIView animateWithDuration:0.3
                          animations:^{
@@ -144,9 +145,13 @@ NSArray *data;
 #pragma mark Filter Method
 
 - (NSArray *)applyFilterWithSearchQuery:(NSString *)filter {
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"DisplayText CONTAINS[cd] %@", filter];
-    NSArray *filteredGoods = [NSArray arrayWithArray:[data filteredArrayUsingPredicate:predicate]];
-    return filteredGoods;
+    if ([filter isEqualToString:@""] && [self showWithEmptyField])
+        return data;
+    else {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"DisplayText CONTAINS[cd] %@", filter];
+        NSArray *filteredGoods = [NSArray arrayWithArray:[data filteredArrayUsingPredicate:predicate]];
+        return filteredGoods;
+    }
 }
 
 #pragma mark Popover Method(s)
